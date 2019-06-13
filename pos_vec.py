@@ -47,14 +47,18 @@ class Vector:
             return NotImplemented
         return type(self)(self.x + other.x, self.y + other.y)
 
-    def __mul__(self, other):
-        if not isinstance(other, int):
+    def __sub__(self, other):
+        if not isinstance(other, type(self)):
             return NotImplemented
-        self.x *= other
-        self.y *= other
+        return type(self)(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, other):
+        if not (isinstance(other, float) or isinstance(other, int)):
+            return NotImplemented
+        return type(self)(self.x * other, self.y * other)
 
     def __rmul__(self, other):
-        self.__mul__(other)
+        return self.__mul__(other)
 
     def __matmul__(self, other):
         if not isinstance(other, type(self)):

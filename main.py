@@ -14,13 +14,15 @@ class Game:
         self.display = pygame.display.set_mode(size)
         self.balls = []
         self.draw = True
+        self.pop = 0
+        self.best_generation = 0
 
     def start(self):
         clock = pygame.time.Clock()
         food_clock = 0
         while True:
-            if len(self.balls) < KEEP_AT:
-                self.balls.extend([ball.AI(self, Position(random.randint(0, 1280), random.randint(0, 720))) for _ in range(KEEP_AT - len(self.balls))])
+            if self.pop < KEEP_AT:
+                self.balls.extend([ball.AI(self, Position(random.randint(0, 1280), random.randint(0, 720))) for _ in range(KEEP_AT - self.pop)])
 
             self.display.fill((255, 255, 255))
 
@@ -35,6 +37,7 @@ class Game:
                 b.step()
 
             if food_clock == 0:
+                print(f"best generation so far: {self.best_generation}")
                 self.balls.append(ball.Food(self, Position(random.randint(0, 1280), random.randint(0, 720))))
                 food_clock = 60
             food_clock -= 1

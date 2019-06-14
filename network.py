@@ -13,9 +13,10 @@ class Node:
         return r
 
     def mutate(self):
-        i = random.randrange(len(self.before))
-        n, w = self.before[i]
-        self.before[i] = (n, w + random.uniform(-0.1, 0.1))
+        for i in range(len(self.before)):
+            if random.random() < 0.01:
+                n, w = self.before[i]
+                self.before[i] = (n, w + random.uniform(-0.1, 0.1))
 
 
 class InputNode:
@@ -44,5 +45,4 @@ class Network:
     def mutate(self):
         for layer in self.layers:
             for node in layer:
-                if random.random() < 0.05:
-                    node.mutate()
+                node.mutate()

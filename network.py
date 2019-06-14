@@ -1,8 +1,7 @@
-import math
 import random
 
 
-activation = math.tanh
+activation = lambda x: x
 
 class Node:
     def __init__(self):
@@ -14,7 +13,7 @@ class Node:
 
     def mutate(self):
         for i in range(len(self.before)):
-            if random.random() < 0.01:
+            if random.random() < 0.005:
                 n, w = self.before[i]
                 self.before[i] = (n, w + random.uniform(-0.1, 0.1))
 

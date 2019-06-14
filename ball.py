@@ -8,7 +8,7 @@ from pos_vec import Position, Vector
 POWER_RATIO = 20
 
 class Ball:
-    def __init__(self, game, pos, vec=None, radius=3):
+    def __init__(self, game, pos, vec=None, radius=2):
         self.game = game
         self.width, self.height = game.size
         self.pos = pos
@@ -19,10 +19,10 @@ class Ball:
         self.pos.move(self.vec)
         if self.pos.x - self.radius < 0 or self.pos.x + self.radius > self.width:
             self.pos.x = min(max(self.pos.x, self.radius), self.height - self.radius)
-            self.vec.x *= -0.2
+            self.vec.x *= -0.25
         if self.pos.y - self.radius < 0 or self.pos.y + self.radius > self.height:
             self.pos.y = min(max(self.pos.y, self.radius), self.height - self.radius)
-            self.vec.y *= -0.2
+            self.vec.y *= -0.25
         self.vec = Vector.from_angle(self.vec.angle, max(self.vec.magnitude - friction, 0))
 
     def draw(self, colour):
@@ -38,10 +38,9 @@ class AI(Ball):
         super().__init__(*args, **kwargs)
         self.game.pop += 1
         self.generation = 0
-        self.net = Network([[Node() for _ in range(6)], [Node() for _ in range(5)]], 7)
+        self.net = Network([[Node() for _ in range(5)], [Node() for _ in range(5)]], 4)
         self.bomb_time = 0
-        self.energy = 20 * 60
-        self.birth_timer = 60
+        self.energy = 300
 
     def step(self):
         nearest_food, sqr_dist = None, float("inf")
@@ -53,47 +52,41 @@ class AI(Ball):
                     sqr_dist = d
 
         if nearest_food and sqr_dist < (self.radius + nearest_food.radius) ** 2:
-            self.energy += 10 * 60
+            self.energy += 120
             self.game.balls.remove(nearest_food)
+            new_ai = copy.copy(self.net)
+            new_ai.mutate()
+            new_ball = AI(self.game, self.pos.copy(), radius=self.radius)
+            new_ball.net = new_ai
+            new_ball.generation = self.generation + 1
+            self.game.balls.append(new_ball)
 
         nearest_vec = nearest_food.pos - self.pos if nearest_food else Vector(0, 0)
         fire, fx, fy, fuse, power = self.net.evaluate([
-            1,
             self.vec.x,
             self.vec.y,
             nearest_vec.x,
-            nearest_vec.y,
-            self.energy / 20,
-            self.bomb_time
+            nearest_vec.y
         ])
-        if fire > 0:
-            self.energy -= 20
+
+        b = 2
+        fx = min(max(fx, -b), b)
+        fy = min(max(fy, -b), b)
+        power = min(max(power, 0), 2)
+
+        if fire > 0 and self.bomb_time > 5:
+            self.energy -= 5
             self.bomb_time = 0
-            self.game.balls.append(Bomb(fuse * 120, max(power, 0), self.game, self.pos.copy(), Vector(fx, fy)))
+            self.game.balls.append(Bomb(fuse, power, self.game, self.pos.copy(), Vector(fx, fy)))
 
         self.energy -= 1
         if self.energy <= 0:
             self.game.balls.remove(self)
             self.game.pop -= 1
-        elif self.energy >= 20 * 120:
-            self.birth_timer -= 1
-            if not self.birth_timer:
-                self.energy -= 20 * 120
-                new_ai = copy.copy(self.net)
-                new_ai.mutate()
-                new_ball = AI(self.game, self.pos.copy(), radius=self.radius)
-                new_ball.net = new_ai
-                new_ball.generation = self.generation + 1
-                if new_ball.generation > self.game.best_generation:
-                    self.game.best_generation = new_ball.generation
-                self.game.balls.append(new_ball)
-                self.birth_timer = 60
-        else:
-            self.birth_timer = 60
 
         self.bomb_time += 1
 
-        self.move(0.1)
+        self.move(0.2)
         self.draw((0, 0, 0))
 
 
@@ -114,11 +107,11 @@ class Bomb(Ball):
                     ball.vec += Vector.from_angle(vec.angle, self.power - dist / self.ratio)
             self.game.balls.remove(self)
 
-        self.move(0.1)
+        self.move(0.4)
         self.draw((255, 0, 0))
 
 
 class Food(Ball):
     def step(self):
-        self.move(0.5)
+        self.move(1.0)
         self.draw((0, 255, 0))

@@ -15,7 +15,6 @@ class Game:
         self.balls = []
         self.draw = True
         self.pop = 0
-        self.best_generation = 0
 
     def start(self):
         clock = pygame.time.Clock()
@@ -37,9 +36,8 @@ class Game:
                 b.step()
 
             if food_clock == 0:
-                print(f"best generation so far: {self.best_generation}")
-                self.balls.append(ball.Food(self, Position(random.randint(0, 1280), random.randint(0, 720))))
-                food_clock = 60
+                self.balls.append(ball.Food(self, Position(random.randint(0, 1280), random.randint(0, 720)), radius=5))
+                food_clock = 10
             food_clock -= 1
 
             if self.draw:
